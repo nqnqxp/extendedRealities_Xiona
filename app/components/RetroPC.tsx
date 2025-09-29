@@ -11,14 +11,14 @@ import { GLTF } from 'three-stdlib'
 // It accepts group props so you can position/rotate/scale the whole model
 export default function RetroPC(props: React.ComponentProps<'group'>) {
   // Load the GLB file from the public directory
-  const gltf = useGLTF('/Retro Pc.glb') as unknown as GLTF
+  const gltf = useGLTF('/Retro%20Pc.glb') as unknown as GLTF
 
   // After loading, enable shadows on all meshes inside the model
   useEffect(() => {
     const scene = gltf.scene as THREE.Object3D
     scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh
-      if ((mesh as any).isMesh) {
+      if (mesh.isMesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
       }
@@ -35,4 +35,4 @@ export default function RetroPC(props: React.ComponentProps<'group'>) {
 }
 
 // Preload so the model is cached before first render
-useGLTF.preload('/Retro Pc.glb')
+useGLTF.preload('/Retro%20Pc.glb')

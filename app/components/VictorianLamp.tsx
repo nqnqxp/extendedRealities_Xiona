@@ -2,7 +2,7 @@
 // This uses useGLTF from @react-three/drei to load the model from the public folder
 // and renders it in the scene. Comments explain each step for beginners.
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { GLTF } from 'three-stdlib'
@@ -19,7 +19,7 @@ export default function VictorianLamp(props: React.ComponentProps<'group'> & { i
     const scene = gltf.scene as THREE.Object3D
     scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh
-      if ((mesh as any).isMesh) {
+      if (mesh.isMesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
         
@@ -29,14 +29,18 @@ export default function VictorianLamp(props: React.ComponentProps<'group'> & { i
         materials.forEach((mat) => {
           if (!mat) return
           // If this looks like a bulb (check name or other properties), control its emissive
-          if ((mat as any).name?.toLowerCase().includes('bulb') || 
-              (mat as any).name?.toLowerCase().includes('light') ||
-              (mat as any).name?.toLowerCase().includes('lamp')) {
+          if ((mat as THREE.MeshStandardMaterial).name?.toLowerCase().includes('bulb') || 
+              (mat as THREE.MeshStandardMaterial).name?.toLowerCase().includes('light') ||
+              (mat as THREE.MeshStandardMaterial).name?.toLowerCase().includes('lamp')) {
             if (isLit) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (mat as any).emissive.setHex(0xFFE4B5)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (mat as any).emissiveIntensity = 0.3
             } else {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (mat as any).emissive.setHex(0x000000)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (mat as any).emissiveIntensity = 0
             }
           }

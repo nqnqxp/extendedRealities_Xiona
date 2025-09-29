@@ -5,7 +5,7 @@
 
 // Import required components
 import React, { useEffect, useRef, useState } from 'react'
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid, Stars } from '@react-three/drei';
 import { EffectComposer, Pixelation, Bloom } from '@react-three/postprocessing';
 import SnowField from './components/SnowField';
@@ -15,28 +15,6 @@ import WoodDesk from './components/WoodDesk';
 import BooksMagazines from './components/BooksMagazines';
 import OfficeChair from './components/OfficeChair';
 import VictorianLamp from './components/VictorianLamp';
-
-// Debug component to log camera position
-function CameraDebugger() {
-  const { camera } = useThree()
-  
-  useEffect(() => {
-    const logPosition = () => {
-      console.log('Camera Position:', {
-        x: camera.position.x.toFixed(2),
-        y: camera.position.y.toFixed(2), 
-        z: camera.position.z.toFixed(2)
-      })
-    }
-    
-    // Log position every 2 seconds
-    const interval = setInterval(logPosition, 2000)
-    
-    return () => clearInterval(interval)
-  }, [camera])
-  
-  return null
-}
 
 // Main homepage component that renders our 3D scene
 export default function Home() {
@@ -67,13 +45,13 @@ export default function Home() {
 
     // Create the HTMLAudioElement that plays our track from the public folder
     // NOTE: File lives in /public so we reference it by "/filename.ext"
-    const audio = new Audio("/Time After Time (Instrumental).mp3")
+    const audio = new Audio("/Time%20After%20Time%20(Instrumental).mp3")
     audio.loop = true // loop for continuous reactivity
     audio.crossOrigin = 'anonymous' // allow connecting to WebAudio graph
     audioElRef.current = audio
 
     // Prepare WebAudio context and analyzer but don't start playback yet
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
     const src = ctx.createMediaElementSource(audio)
     const analyzer = ctx.createAnalyser()
     analyzer.fftSize = 1024 // resolution of the analysis
@@ -270,9 +248,6 @@ export default function Home() {
           fadeDistance={25}         // Grid fades out at this distance
           fadeStrength={1}          // How quickly the fade happens
         />
-        
-        {/* Debug component to log camera position */}
-        <CameraDebugger />
         
         {/* 
           CAMERA CONTROLS

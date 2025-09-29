@@ -31,7 +31,7 @@ export default function OfficeDesk(props: React.ComponentProps<'group'>) {
     const scene = gltf.scene as THREE.Object3D
     scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh
-      if ((mesh as any).isMesh) {
+      if (mesh.isMesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
         // Replace all materials with chrome
