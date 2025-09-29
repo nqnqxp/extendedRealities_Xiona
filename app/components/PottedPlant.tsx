@@ -52,6 +52,8 @@ export function Model(props: React.ComponentProps<'group'>) {
         // Scale up the model (original might be very small)
         scale={100}
         
+        castShadow
+
         // INTERACTION EVENTS
         // onClick: When user clicks the plant, trigger position randomization
         onClick={randomizePosition}

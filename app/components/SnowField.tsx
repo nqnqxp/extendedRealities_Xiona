@@ -34,6 +34,40 @@ export function SnowField({
   // pointsRef will let us directly manipulate the Points object every frame
   const pointsRef = useRef<THREE.Points>(null)
 
+  // Create a small circular sprite texture in memory for soft-edged round flakes
+  // We draw a white circle that fades to transparent at the edges using a radial gradient
+  const spriteTexture = useMemo(() => {
+    // Create an offscreen canvas (this will not appear in the webpage)
+    const canvas = document.createElement('canvas')
+    canvas.width = 64
+    canvas.height = 64
+    const context = canvas.getContext('2d')!
+
+    const cx = canvas.width / 2
+    const cy = canvas.height / 2
+    const radius = canvas.width / 2
+
+    // Radial gradient: opaque center -> transparent edge
+    const gradient = context.createRadialGradient(cx, cy, 0, cx, cy, radius)
+    gradient.addColorStop(0.0, 'rgba(255,255,255,1.0)')
+    gradient.addColorStop(0.6, 'rgba(255,255,255,0.85)')
+    gradient.addColorStop(1.0, 'rgba(255,255,255,0.0)')
+
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    context.fillStyle = gradient
+    context.beginPath()
+    context.arc(cx, cy, radius, 0, Math.PI * 2)
+    context.fill()
+
+    // Convert to a Three.js texture
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.minFilter = THREE.LinearFilter
+    texture.magFilter = THREE.LinearFilter
+    texture.generateMipmaps = false
+    texture.needsUpdate = true
+    return texture
+  }, [])
+
   // We create the initial positions for all particles once using useMemo
   // This avoids recalculating positions on every render for performance
   const positions = useMemo(() => {
@@ -117,16 +151,18 @@ export function SnowField({
 
         {/* PointsMaterial defines how each vertex (particle) looks */}
         <pointsMaterial
-          color={0xffffff} // Pure white snow
-          size={size} // Pixel size for each particle
-          sizeAttenuation // Particles get smaller when further away (adds depth)
-          depthWrite={false} // Prevents z-fighting; helps with soft look
-          depthTest={false} // Render on top to prevent darkening behind geometry
-          transparent // Allow blending with the background
-          opacity={0.9} // Slight transparency for softness
+          color={0xffffff}                  // Pure white snow
+          size={size}                       // Pixel size for each particle
+          sizeAttenuation                   // Particles get smaller when further away (adds depth)
+          map={spriteTexture}               // Use our circular soft-edged sprite
+          alphaTest={0.01}                  // Discard fully transparent pixels (keeps edges soft)
+          transparent                       // Allow blending with the background
+          opacity={0.98}                    // Slightly stronger so flakes survive pixelation
+          depthWrite={false}                // Prevents z-fighting; helps with soft look
+          depthTest={false}                 // Render on top so flakes remain visible
           blending={THREE.AdditiveBlending} // Keep flakes bright when overlapping
-          fog={false} // Avoid fog darkening distant flakes
-          toneMapped={false} // Prevent renderer tone mapping from dimming whites
+          fog={false}                       // Keep flakes bright; fog already reduces visibility with distance
+          toneMapped={false}                // Prevent tone mapping from dimming whites
         />
       </points>
     </group>

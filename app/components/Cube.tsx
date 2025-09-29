@@ -12,7 +12,7 @@ export function Cube(props: React.ComponentProps<'mesh'>) {
     // mesh is the fundamental 3D object in Three.js
     // It combines geometry (shape) with material (appearance)
     // {...props} spreads any props passed to this component onto the mesh
-    <mesh {...props}>
+    <mesh {...props} castShadow>
       
       {/* 
         boxGeometry defines the shape of our cube
