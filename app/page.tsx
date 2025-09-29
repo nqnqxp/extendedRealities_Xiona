@@ -8,8 +8,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid, Stars } from '@react-three/drei';
 import { EffectComposer, Pixelation, Bloom } from '@react-three/postprocessing';
-import { Model as PottedPlant } from './components/PottedPlant';
-import { Cube } from './components/Cube';
 import SnowField from './components/SnowField';
 import SnowGround from './components/SnowGround';
 
@@ -41,7 +39,7 @@ export default function Home() {
 
     // Create the HTMLAudioElement that plays our track from the public folder
     // NOTE: File lives in /public so we reference it by "/filename.ext"
-    const audio = new Audio("/(She's) Just a Phase - Puma Blue (Instrumental).mp3")
+    const audio = new Audio("/Time After Time (Instrumental).mp3")
     audio.loop = true // loop for continuous reactivity
     audio.crossOrigin = 'anonymous' // allow connecting to WebAudio graph
     audioElRef.current = audio
@@ -197,11 +195,6 @@ export default function Home() {
         {/* Snowy ground plane that receives shadows */}
         <SnowGround position={[0, -1, 0]} />
 
-        {/* Static orange cube positioned at the origin (0, 0, 0) */}
-        <Cube />
-        
-        {/* Interactive potted plant that can be clicked to teleport */}
-        <PottedPlant scale={10} />
 
         {/* Heavier snowfall with round, soft-edged flakes over a wide area.
             We drive fallSpeed and size from the audio level for reactivity. */}
@@ -256,7 +249,7 @@ export default function Home() {
         */}
         <EffectComposer multisampling={0}>
           {/* Bloom intensity responds to audio for a gentle pulsing glow */}
-          <Bloom intensity={reactiveBloom} luminanceThreshold={0.1} luminanceSmoothing={0.14} mipmapBlur />
+          <Bloom intensity={reactiveBloom} luminanceThreshold={0.05} luminanceSmoothing={0.2} mipmapBlur />
           <Pixelation granularity={6} />
         </EffectComposer>
       </Canvas>

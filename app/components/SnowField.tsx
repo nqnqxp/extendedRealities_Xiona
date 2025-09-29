@@ -151,18 +151,18 @@ export function SnowField({
 
         {/* PointsMaterial defines how each vertex (particle) looks */}
         <pointsMaterial
-          color={0xffffff}                  // Pure white snow
-          size={size}                       // Pixel size for each particle
-          sizeAttenuation                   // Particles get smaller when further away (adds depth)
-          map={spriteTexture}               // Use our circular soft-edged sprite
-          alphaTest={0.01}                  // Discard fully transparent pixels (keeps edges soft)
-          transparent                       // Allow blending with the background
-          opacity={0.98}                    // Slightly stronger so flakes survive pixelation
-          depthWrite={false}                // Prevents z-fighting; helps with soft look
-          depthTest={false}                 // Render on top so flakes remain visible
-          blending={THREE.AdditiveBlending} // Keep flakes bright when overlapping
-          fog={false}                       // Keep flakes bright; fog already reduces visibility with distance
-          toneMapped={false}                // Prevent tone mapping from dimming whites
+          color={0xffffff}              // Pure white snow
+          size={size}                   // Pixel size for each particle
+          sizeAttenuation               // Particles get smaller when further away (adds depth)
+          map={spriteTexture}           // Use our circular soft-edged sprite
+          alphaTest={0.01}              // Discard fully transparent pixels (keeps edges soft)
+          transparent                   // Enable alpha blending
+          opacity={0.95}                // Gentle transparency for softness
+          depthWrite={false}            // Do not write depth to avoid artifacts
+          depthTest={true}              // Respect scene depth so objects occlude snow
+          blending={THREE.NormalBlending} // Natural blending so occlusion works
+          fog={false}                   // Keep flakes bright; visual fade already occurs
+          toneMapped={false}            // Prevent tone mapping from dimming whites
         />
       </points>
     </group>
