@@ -5,17 +5,45 @@
 
 // Import required components
 import React, { useEffect, useRef, useState } from 'react'
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls, Grid, Stars } from '@react-three/drei';
 import { EffectComposer, Pixelation, Bloom } from '@react-three/postprocessing';
 import SnowField from './components/SnowField';
 import SnowGround from './components/SnowGround';
+import RetroPC from './components/RetroPC';
+import WoodDesk from './components/WoodDesk';
+import BooksMagazines from './components/BooksMagazines';
+import OfficeChair from './components/OfficeChair';
+import VictorianLamp from './components/VictorianLamp';
+
+// Debug component to log camera position
+function CameraDebugger() {
+  const { camera } = useThree()
+  
+  useEffect(() => {
+    const logPosition = () => {
+      console.log('Camera Position:', {
+        x: camera.position.x.toFixed(2),
+        y: camera.position.y.toFixed(2), 
+        z: camera.position.z.toFixed(2)
+      })
+    }
+    
+    // Log position every 2 seconds
+    const interval = setInterval(logPosition, 2000)
+    
+    return () => clearInterval(interval)
+  }, [camera])
+  
+  return null
+}
 
 // Main homepage component that renders our 3D scene
 export default function Home() {
   // AUDIO REACTIVITY STATE
   // We continuously measure the audio level (0 to 1) and map it to visuals
   const [audioLevel, setAudioLevel] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
 
   // Derived visual parameters based on the measured audio level
   // Using base + range * level keeps visuals stable when quiet and reactive when loud
@@ -111,8 +139,10 @@ export default function Home() {
     if (ctx.state === 'suspended') await ctx.resume()
     if (audio.paused) {
       await audio.play()
+      setIsPlaying(true)
     } else {
       audio.pause()
+      setIsPlaying(false)
     }
   }
 
@@ -129,7 +159,7 @@ export default function Home() {
         It sets up WebGL context and handles rendering
         camera prop sets the initial camera position [x, y, z]
       */}
-      <Canvas camera={{ position: [5, 5, 5] }} style={{ background: '#0b1220' }} shadows>
+      <Canvas camera={{ position: [-10.25, 7.40, 6.05] }} style={{ background: '#0b1220' }} shadows>
         
         {/* Night sky background to match fog for seamless blending */}
         <color attach="background" args={["#0b1220"]} />
@@ -195,6 +225,22 @@ export default function Home() {
         {/* Snowy ground plane that receives shadows */}
         <SnowGround position={[0, -1, 0]} />
 
+        {/* DESK SETUP - All models arranged in the center */}
+        
+        {/* Main wood desk in the center */}
+        <WoodDesk position={[0, -1, 0]} scale={0.08} rotation={[0, Math.PI, 0]} />
+        
+        {/* Retro PC on the desk */}
+        <RetroPC position={[7.5, 2.4, -6.7]} scale={4.2} rotation={[0, Math.PI, 0]} />
+        
+        {/* Books and magazines on the desk */}
+        <BooksMagazines position={[-0.03, 2.3, -2.8]} scale={0.12} rotation={[0, Math.PI/30, 0]} />
+        
+        {/* Office chair behind the desk */}
+        <OfficeChair position={[-2.0, -1, -0.6]} scale={0.04} rotation={[0, Math.PI/2, 0]} />
+        
+        {/* Victorian desk lamp on the desk to the right of the PC */}
+        <VictorianLamp position={[0.4, 2.4, 2.1]} scale={4.0} rotation={[0, Math.PI*1.1, 0]} isLit={isPlaying} />
 
         {/* Heavier snowfall with round, soft-edged flakes over a wide area.
             We drive fallSpeed and size from the audio level for reactivity. */}
@@ -224,6 +270,9 @@ export default function Home() {
           fadeDistance={25}         // Grid fades out at this distance
           fadeStrength={1}          // How quickly the fade happens
         />
+        
+        {/* Debug component to log camera position */}
+        <CameraDebugger />
         
         {/* 
           CAMERA CONTROLS
