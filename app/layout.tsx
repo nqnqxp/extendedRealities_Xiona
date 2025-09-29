@@ -3,6 +3,7 @@
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 // Font configuration using Next.js built-in font optimization
@@ -15,6 +16,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono", // Monospace font for code display
   subsets: ["latin"],
+});
+
+// Load the provided local OTF font from the public folder and expose a CSS variable
+const pfPixel = localFont({
+  src: "../public/PFPixelscriptPro-subset.otf",
+  variable: "--font-pf",
+  display: "swap",
 });
 
 // Metadata for SEO and browser tab display
@@ -36,7 +44,7 @@ export default function RootLayout({
     <html lang="en">
       <body
         // Apply our custom fonts using CSS variables and add antialiasing for smooth text
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${pfPixel.variable} antialiased`}
       >
         {/* This is where page content gets rendered */}
         {children}

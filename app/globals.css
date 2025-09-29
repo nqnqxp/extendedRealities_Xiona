@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Load the provided OTF font from the public folder */
+@font-face {
+  font-family: 'PFPixelscriptPro';
+  src: url('/PFPixelscriptPro-subset.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -10,6 +19,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-ui: var(--font-pf);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +32,38 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui), Arial, Helvetica, sans-serif;
+}
+
+/* Simple UI button shared style for the play/pause control */
+.uiButton {
+  position: absolute;
+  z-index: 10;
+  top: 80%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0;
+  border: none;
+  outline: none;
+  border-radius: 0;
+  background: transparent;
+  color: #b5bac4;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: 'PFPixelscriptPro', var(--font-ui), Arial, Helvetica, sans-serif;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.uiFont {
+  font-family: 'PFPixelscriptPro', Arial, Helvetica, sans-serif !important;
+  font-weight: 400;
+}
+
+.uiButton:hover {
+  background: transparent;
+  color: #9aa0a6;
 }

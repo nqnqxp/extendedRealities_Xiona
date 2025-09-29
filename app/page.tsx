@@ -4,6 +4,7 @@
 // It's needed because we're using browser-specific features like 3D graphics
 
 // Import required components
+import React, { useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Grid, Stars } from '@react-three/drei';
 import { EffectComposer, Pixelation, Bloom } from '@react-three/postprocessing';
@@ -14,9 +15,117 @@ import SnowGround from './components/SnowGround';
 
 // Main homepage component that renders our 3D scene
 export default function Home() {
+  // AUDIO REACTIVITY STATE
+  // We continuously measure the audio level (0 to 1) and map it to visuals
+  const [audioLevel, setAudioLevel] = useState(0)
+
+  // Derived visual parameters based on the measured audio level
+  // Using base + range * level keeps visuals stable when quiet and reactive when loud
+  const reactiveFallSpeed = 2.6 + 3.0 * audioLevel   // faster snow when louder
+  const reactiveSnowSize = 0.8 + 0.5 * audioLevel    // larger flakes with volume
+  const reactiveBloom = 1.75 + 0.9 * audioLevel      // stronger glow when louder
+
+  // Keep references so we can start/stop playback and cleanup WebAudio properly
+  const audioElRef = useRef<HTMLAudioElement | null>(null)
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+  const analyzerRef = useRef<AnalyserNode | null>(null)
+  const dataArrayRef = useRef<Uint8Array | null>(null)
+  const rafRef = useRef<number | null>(null)
+  const isInitializedRef = useRef(false)
+
+  // Initialize the audio graph once (without autoplaying). We will start/pause via button.
+  useEffect(() => {
+    // No-op on server
+    if (typeof window === 'undefined') return
+
+    // Create the HTMLAudioElement that plays our track from the public folder
+    // NOTE: File lives in /public so we reference it by "/filename.ext"
+    const audio = new Audio("/(She's) Just a Phase - Puma Blue (Instrumental).mp3")
+    audio.loop = true // loop for continuous reactivity
+    audio.crossOrigin = 'anonymous' // allow connecting to WebAudio graph
+    audioElRef.current = audio
+
+    // Prepare WebAudio context and analyzer but don't start playback yet
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const src = ctx.createMediaElementSource(audio)
+    const analyzer = ctx.createAnalyser()
+    analyzer.fftSize = 1024 // resolution of the analysis
+    analyzer.smoothingTimeConstant = 0.8 // smooths rapid changes
+    // Allocate an ArrayBuffer explicitly to satisfy stricter typing
+    const dataBuffer = new ArrayBuffer(analyzer.frequencyBinCount)
+    const data = new Uint8Array(dataBuffer)
+
+    // Wire the graph: audio element -> analyzer -> speakers
+    src.connect(analyzer)
+    analyzer.connect(ctx.destination)
+
+    // Save refs for later use and cleanup
+    audioCtxRef.current = ctx
+    sourceRef.current = src
+    analyzerRef.current = analyzer
+    dataArrayRef.current = data
+    isInitializedRef.current = true
+
+    // Frame loop that computes a normalized loudness [0..1]
+    const tick = () => {
+      const analyzerNode = analyzerRef.current
+      const array = dataArrayRef.current
+      if (!analyzerNode || !array) return
+      // Cast to satisfy TypeScript lib typing differences across versions
+      // Call with relaxed typing to satisfy differing DOM lib versions
+      (analyzerNode as unknown as { getByteFrequencyData: (arr: Uint8Array) => void })
+        .getByteFrequencyData(array as unknown as Uint8Array)
+      let sum = 0
+      for (let i = 0; i < array.length; i++) sum += array[i]
+      const avg = sum / array.length // 0..255
+      const level = Math.min(1, Math.max(0, avg / 255))
+      // Smooth with a little inertia for nicer visuals
+      setAudioLevel(prev => prev * 0.85 + level * 0.15)
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+
+    // Cleanup all nodes and animation frame when the component unmounts
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      try {
+        audio.pause()
+      } catch {}
+      try {
+        audioCtxRef.current?.close()
+      } catch {}
+      audioElRef.current = null
+      audioCtxRef.current = null
+      sourceRef.current = null
+      analyzerRef.current = null
+      dataArrayRef.current = null
+      isInitializedRef.current = false
+    }
+  }, [])
+
+  // Simple play/pause button handler. Must be triggered by user gesture due to browser policies.
+  const onTogglePlay = async () => {
+    if (!isInitializedRef.current || !audioElRef.current || !audioCtxRef.current) return
+    const ctx = audioCtxRef.current
+    const audio = audioElRef.current
+    // Browsers often require resuming the context on user gesture
+    if (ctx.state === 'suspended') await ctx.resume()
+    if (audio.paused) {
+      await audio.play()
+    } else {
+      audio.pause()
+    }
+  }
+
   return (
     // Container div that takes up the full viewport (100% width and height)
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      {/* Simple UI to start/stop audio so visuals can react to the track */}
+      <button className="uiButton uiFont" onClick={onTogglePlay}>
+        {/* The button toggles playback state, label is generic for simplicity */}
+        lock in
+      </button>
       {/* 
         Canvas is the main React Three Fiber component that creates a 3D scene
         It sets up WebGL context and handles rendering
@@ -94,8 +203,15 @@ export default function Home() {
         {/* Interactive potted plant that can be clicked to teleport */}
         <PottedPlant scale={10} />
 
-        {/* Heavier snowfall with round, soft-edged flakes over a wide area */}
-        <SnowField count={6000} areaSize={240} height={90} fallSpeed={2.6} size={0.8} />
+        {/* Heavier snowfall with round, soft-edged flakes over a wide area.
+            We drive fallSpeed and size from the audio level for reactivity. */}
+        <SnowField 
+          count={6000} 
+          areaSize={240} 
+          height={90} 
+          fallSpeed={reactiveFallSpeed} 
+          size={reactiveSnowSize} 
+        />
         
         {/* 
           SCENE HELPERS
@@ -139,7 +255,8 @@ export default function Home() {
           Increase granularity for larger pixels; decrease for finer pixels.
         */}
         <EffectComposer multisampling={0}>
-          <Bloom intensity={1.75} luminanceThreshold={0.1} luminanceSmoothing={0.14} mipmapBlur />
+          {/* Bloom intensity responds to audio for a gentle pulsing glow */}
+          <Bloom intensity={reactiveBloom} luminanceThreshold={0.1} luminanceSmoothing={0.14} mipmapBlur />
           <Pixelation granularity={6} />
         </EffectComposer>
       </Canvas>
